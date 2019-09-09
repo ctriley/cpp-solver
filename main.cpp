@@ -37,32 +37,6 @@ int main(int argc, char* argv[]) {
     std::cerr << desc << std::endl;
     return 1;
   }
-  std::cout << "Hello, World!" << std::endl;
-
-
-
-  // if just swapping two rols or two columns you can do this:
-  Eigen::MatrixXi M = Eigen::MatrixXi::Random(3,3);
-  std::cout << M << std::endl;
-  M.row(1).swap(M.row(2));
-  std::cout << "**************************" << std::endl;
-  std::cout << M << std::endl;
-  std::cout << "**************************" << std::endl;
-
-  // a permutation matrix (row, col) = (origin, destination)
-  // if you do A * perm you permute columns
-  // perm * A permutes the rows
-
-  Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm(3);
-  perm.setIdentity();
-  Eigen::MatrixXi M_perm = M * perm; // permute columns
-  std::cout << M << std::endl;
-  std::cout << "**************************" << std::endl;
-  std:: cout << M_perm << std::endl;
-
-  M_perm = perm * M; // permute rows
-
-
   // intializing values
   Eigen::VectorXd c(5);
   c << -2, 7, 14, 2, -4;
@@ -72,8 +46,9 @@ int main(int argc, char* argv[]) {
   A << -2, -2, 3, 1, -2,
   1, 4, 1, -1, -1;
 
-  std::vector<int> primal_basis = {0, 2};
-  std::vector<int> dual_basis = {3, 4};
-  cppsolver::Simplex(cppsolver::OBJ_FUNC::MINIMIZE, A, b, c, primal_basis);
+  std::vector<long> primal_basis = {0, 2};
+  std::vector<long> dual_basis = {3, 4};
+  cppsolver::Simplex(cppsolver::OBJ_FUNC::MINIMIZE, A, b, c,
+      primal_basis);
   return 0;
 }
