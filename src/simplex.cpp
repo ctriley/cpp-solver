@@ -11,12 +11,39 @@ namespace cppsolver {
 
   Simplex::Simplex(OBJ_FUNC mode, const Eigen::MatrixXd &A,
       const Eigen::VectorXd &b, const Eigen::VectorXd &c, std::vector<long> &basis) {
-    std::vector<long> non_basis;
+    int iteration = 0;
+    auto simplex_mode = chooseSimplexMode(A, b, c, basis);
+    if (simplex_mode == SIMPLEX_MODE::PRIMAL) {
+      runPrimal(mode, A, b, c, basis);
+    } else if (simplex_mode == SIMPLEX_MODE::DUAL) {
+      runDual(mode, A, b, c, basis);
+    } else if (simplex_mode == SIMPLEX_MODE::PHASE_I) {
+      Eigen::MatrixXd A_copy(A);
+      Eigen::VectorXd b_copy(b);
+      Eigen::VectorXd c_copy(c);
+      runPhaseI(mode, A_copy, b_copy, c_copy, basis);
+      runPrimal(mode, A_copy, b_copy, c_copy, basis);
+    }
+  }
 
-    for(long i = 0; i < A.cols(); ++i) {
-     if(!findInVector(basis, i).first) {
-       non_basis.push_back(i);
-     }
+
+  void Simplex::runDual(OBJ_FUNC mode, const Eigen::MatrixXd &A,
+    const Eigen::VectorXd &b, const Eigen::VectorXd &c, std::vector<long> &basis) {
+
+  }
+
+  void Simplex::runPhaseI(OBJ_FUNC mode, Eigen::MatrixXd &A,
+    Eigen::VectorXd &b, Eigen::VectorXd &c, std::vector<long> &basis) {
+
+  }
+
+  void Simplex::runPrimal(OBJ_FUNC mode, const Eigen::MatrixXd &A,
+    const Eigen::VectorXd &b, const Eigen::VectorXd &c, std::vector<long> &basis) {
+    std::vector<long> non_basis;
+    for (long i = 0; i < A.cols(); ++i) {
+      if (!findInVector(basis, i).first) {
+        non_basis.push_back(i);
+      }
     }
     Eigen::MatrixXd Abeta = A(Eigen::all, basis);
     Eigen::MatrixXd Abeta_inverse = Abeta.inverse();
@@ -59,6 +86,42 @@ namespace cppsolver {
       non_basis[p2.second] = leaving_index;
       ++iteration;
     }
+  }
+
+  SIMPLEX_MODE Simplex::chooseSimplexMode(const Eigen::MatrixXd &A,
+      const Eigen::VectorXd &b, const Eigen::VectorXd &c, std::vector<long> &basis) {
+    std::vector<int> non_basis;
+    for (long i = 0; i < A.cols(); ++i) {
+      if (!findInVector(basis, i).first) {
+        non_basis.push_back(i);
+      }
+    }
+
+    // create permutation matrix to permute A and c
+    std::vector<long> index_vector = basis;
+    index_vector.insert(index_vector.end(), non_basis.begin(), non_basis.end());
+    Eigen::VectorXi indices(A.cols());
+    for(long i = 0; i < indices.size(); ++i) {
+      indices[i] = index_vector[i];
+    }
+    Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm;
+    perm.indices() = indices;
+
+    // compute primal and dual variable values
+    Eigen::MatrixXd A_beta_inverse = A(Eigen::all, basis).inverse();
+    Eigen::VectorXd y_beta = c(basis, Eigen::all).transpose() * A_beta_inverse;
+    Eigen::VectorXd x_beta = A_beta_inverse * b;
+
+    // x_beta and y_beta are the primal and dual values
+    if(x_beta.minCoeff() >= 0) {
+      // primal simplex
+      return SIMPLEX_MODE::PRIMAL;
+    } else if(((c.transpose() * perm) - y_beta.transpose() * (A * perm)).minCoeff() >= 0) {
+      // dual simplex
+      return SIMPLEX_MODE::DUAL;
+    }
+    return SIMPLEX_MODE::PHASE_I;
+
   }
 
   void Simplex::updateInverse(const Eigen::VectorXd &alpha, long leaving_index,

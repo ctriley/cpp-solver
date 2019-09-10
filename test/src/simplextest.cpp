@@ -47,7 +47,7 @@ namespace cppsolver {
     Eigen::MatrixXd A(2, 5);
     A << -2, -2, 3, 1, -2,
         1, 4, 1, -1, -1;
-    std::vector<int> primal_basis = {0, 2};
+    std::vector<long> primal_basis = {0, 2};
 
     Simplex(OBJ_FUNC::MINIMIZE, A, b, c, primal_basis);
     ASSERT_EQ(10, 10);
@@ -62,7 +62,7 @@ namespace cppsolver {
     Eigen::MatrixXd A(2, 5);
     A << -2, -2, 3, 1, -2,
         1, 4, 1, -1, -1;
-    std::vector<int> dual_basis = {3, 4};
+    std::vector<long> dual_basis = {3, 4};
     Simplex(OBJ_FUNC::MINIMIZE, A, b, c, dual_basis);
 
   }
