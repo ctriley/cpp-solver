@@ -49,8 +49,8 @@ namespace cppsolver {
         1, 4, 1, -1, -1;
     std::vector<long> primal_basis = {0, 2};
 
-    Simplex(OBJ_FUNC::MINIMIZE, A, b, c, primal_basis);
-    ASSERT_EQ(10, 10);
+    Simplex simplex(OBJ_FUNC::MINIMIZE, A, b, c, primal_basis);
+    ASSERT_DOUBLE_EQ(simplex.getObjective(), 24.5);
   }
 
   TEST_F(SimplexTest, DualTest) {
@@ -63,7 +63,39 @@ namespace cppsolver {
     A << -2, -2, 3, 1, -2,
         1, 4, 1, -1, -1;
     std::vector<long> dual_basis = {3, 4};
-    Simplex(OBJ_FUNC::MINIMIZE, A, b, c, dual_basis);
+    Simplex simplex(OBJ_FUNC::MINIMIZE, A, b, c, dual_basis);
+    ASSERT_DOUBLE_EQ(simplex.getObjective(), 24.5);
 
+  }
+
+  TEST_F(SimplexTest, PhaseITEST) {
+    // intializing values
+    Eigen::VectorXd c(5);
+    c << -2, 7, 14, 2, -4;
+    Eigen::VectorXd b(2);
+    b << 0, 7;
+    Eigen::MatrixXd A(2, 5);
+    A << -2, -2, 3, 1, -2,
+        1, 4, 1, -1, -1;
+    std::vector<long> not_a_basis = {1, 4};
+    cppsolver::Simplex simplex(cppsolver::OBJ_FUNC::MINIMIZE, A, b, c,
+                       not_a_basis);
+    ASSERT_DOUBLE_EQ(simplex.getObjective(), 24.5);
+
+  }
+
+  TEST_F(SimplexTest, PhaseIEmptyTest) {
+    // intializing values
+    Eigen::VectorXd c(5);
+    c << -2, 7, 14, 2, -4;
+    Eigen::VectorXd b(2);
+    b << 0, 7;
+    Eigen::MatrixXd A(2, 5);
+    A << -2, -2, 3, 1, -2,
+        1, 4, 1, -1, -1;
+    std::vector<long> empty_basis = {};
+    cppsolver::Simplex simplex(cppsolver::OBJ_FUNC::MINIMIZE, A, b, c,
+        empty_basis);
+    ASSERT_DOUBLE_EQ(simplex.getObjective(), 24.5);
   }
 }

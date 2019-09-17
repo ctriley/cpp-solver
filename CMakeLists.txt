@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
-project(cppsolver VERSION "0.2.0")
+project(cppsolver VERSION "0.3.0")
 
 configure_file(${PROJECT_SOURCE_DIR}/config.hpp.in ${PROJECT_BINARY_DIR}/config.hpp)
 

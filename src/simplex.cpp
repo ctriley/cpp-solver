@@ -26,6 +26,10 @@ namespace cppsolver {
     }
   }
 
+  void Simplex::runPhaseI(OBJ_FUNC mode, Eigen::MatrixXd &A,
+      Eigen::VectorXd &b, Eigen::VectorXd &c, std::vector<long> &basis) {
+  }
+
 
   void Simplex::runDual(OBJ_FUNC mode, const Eigen::MatrixXd &A,
     const Eigen::VectorXd &b, const Eigen::VectorXd &c, std::vector<long> &basis) {
@@ -52,7 +56,7 @@ namespace cppsolver {
       std::cout << "*******************" << std::endl;
       std::cout << Abeta_inverse_test << std::endl;
       Eigen::VectorXd c_beta = c(basis, Eigen::all);
-      Eigen::VectorXd pi_beta = c_beta.transpose() * Abeta_inverse;
+      Eigen::VectorXd pi_beta = c_beta.transpose() * Abeta_inverse_test;
       Eigen::MatrixXd A_eta = A(Eigen::all, non_basis);
       Eigen::VectorXd c_eta = c(non_basis, Eigen::all);
       Eigen::MatrixXd A_perm = A * perm;
@@ -66,8 +70,14 @@ namespace cppsolver {
       Eigen::VectorXd x_beta = Abeta_inverse * b;
       if(x_beta.minCoeff() >= 0) {
         std::cout << "Num iterations: " << iteration << std::endl;
-        std::cout << "Objective: " << b.transpose() * pi_beta << std::endl;
-        std::cout << "X values: " << pi_beta << std::endl;
+        Eigen::VectorXd x = Eigen::VectorXd::Zero(c.size());
+        for(long i = 0; i < basis.size(); ++i) {
+          x[basis[i]] = x_beta[i];
+        }
+        _objective = b.transpose() * pi_beta;
+        _values.resize(x_beta.size());
+        Eigen::VectorXd::Map(&_values[0], x_beta.size()) = x_beta;
+        _solved = true;
         break;
       }
       // now choose leaving and entering values
@@ -113,11 +123,6 @@ namespace cppsolver {
     }
   }
 
-  void Simplex::runPhaseI(OBJ_FUNC mode, Eigen::MatrixXd &A,
-    Eigen::VectorXd &b, Eigen::VectorXd &c, std::vector<long> &basis) {
-
-  }
-
   void Simplex::runPrimal(OBJ_FUNC mode, const Eigen::MatrixXd &A,
     const Eigen::VectorXd &b, const Eigen::VectorXd &c, std::vector<long> &basis) {
     std::vector<long> non_basis;
@@ -138,9 +143,14 @@ namespace cppsolver {
       auto [entering_index, worst_rc] = findEnteringValue(mode, rc);
       if (worst_rc > 0) {
         std::cout << "Num iterations: " << iteration << std::endl;
-        std::cout << "Objective: " << cbeta.transpose() * x_beta << std::endl;
-        std::cout << "X values: " << x_beta << std::endl;
-        printVector(basis);
+        Eigen::VectorXd x = Eigen::VectorXd::Zero(c.size());
+        for(long i = 0; i < basis.size(); ++i) {
+          x[basis[i]] = x_beta[i];
+        }
+        _objective = cbeta.transpose() * x_beta;
+        _values.resize(x.size());
+        Eigen::VectorXd::Map(&_values[0], x.size()) = x;
+        _solved = true;
         break;
         // stop
       }
@@ -168,6 +178,10 @@ namespace cppsolver {
 
   SIMPLEX_MODE Simplex::chooseSimplexMode(const Eigen::MatrixXd &A,
       const Eigen::VectorXd &b, const Eigen::VectorXd &c, std::vector<long> &basis) {
+    if(basis.empty()) {
+      return SIMPLEX_MODE::PHASE_I;
+    }
+
     std::vector<int> non_basis;
     for (long i = 0; i < A.cols(); ++i) {
       if (!findInVector(basis, i).first) {
@@ -250,6 +264,20 @@ namespace cppsolver {
       }
     }
     return {entering_index, worst_rc};
+  }
+
+  double Simplex::getObjective() const {
+    if(!_solved) {
+      throw std::logic_error("No solution");
+    }
+    return _objective;
+  }
+
+  const std::vector<double>& Simplex::getValues() const {
+    if(!_solved) {
+      throw std::logic_error("No solution");
+    }
+    return _values;
   }
 
   template <typename T>

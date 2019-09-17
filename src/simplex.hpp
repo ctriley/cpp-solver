@@ -14,6 +14,9 @@ namespace cppsolver {
 
   class Simplex {
   private:
+    double _objective;
+    std::vector<double> _values;
+    bool _solved = false;
     void runPrimal(OBJ_FUNC mode, const Eigen::MatrixXd &A, const Eigen::VectorXd &b,
             const Eigen::VectorXd &c, std::vector<long> &basis);
     void runDual(OBJ_FUNC mode, const Eigen::MatrixXd &A, const Eigen::VectorXd &b,
@@ -37,6 +40,8 @@ namespace cppsolver {
     void printVector(const std::vector<T> &vec);
 
   public:
+    double getObjective() const;
+    const std::vector<double>& getValues() const;
     Simplex(OBJ_FUNC mode, const Eigen::MatrixXd &A, const Eigen::VectorXd &b,
         const Eigen::VectorXd &c, std::vector<long> &basis);
   };
