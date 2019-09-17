@@ -49,6 +49,6 @@ int main(int argc, char* argv[]) {
   std::vector<long> primal_basis = {0, 2};
   std::vector<long> dual_basis = {3, 4};
   cppsolver::Simplex(cppsolver::OBJ_FUNC::MINIMIZE, A, b, c,
-      primal_basis);
+      dual_basis);
   return 0;
 }

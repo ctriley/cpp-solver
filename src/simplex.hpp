@@ -25,9 +25,11 @@ namespace cppsolver {
     static void updateInverse(const Eigen::VectorXd &alpha, long leaving_index,
         Eigen::MatrixXd &Abeta_inverse);
     static long findLeavingValue(const Eigen::VectorXd &x_beta,
-        const Eigen::VectorXd &alpha);
+        const Eigen::VectorXd &alpha, int multiplier=1);
     [[nodiscard]] static std::pair<long, double> findEnteringValue(OBJ_FUNC mode,
         const Eigen::VectorXd &rc);
+    void createNonBasis(const Eigen::MatrixXd &A,
+        const std::vector<long> &basis, std::vector<long> &non_basis);
     template <typename T>
     std::pair<bool, int > findInVector(const std::vector<T>  & vecOfElements,
         const T  & element);
