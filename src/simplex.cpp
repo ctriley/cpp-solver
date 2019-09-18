@@ -18,16 +18,29 @@ namespace cppsolver {
     } else if (simplex_mode == SIMPLEX_MODE::DUAL) {
       runDual(mode, A, b, c, basis);
     } else if (simplex_mode == SIMPLEX_MODE::PHASE_I) {
-      Eigen::MatrixXd A_copy(A);
-      Eigen::VectorXd b_copy(b);
-      Eigen::VectorXd c_copy(c);
-      runPhaseI(mode, A_copy, b_copy, c_copy, basis);
-      runPrimal(mode, A_copy, b_copy, c_copy, basis);
+      runPhaseI(mode, A, b, c, basis);
+      runPrimal(mode, A, b, c, basis);
     }
   }
 
-  void Simplex::runPhaseI(OBJ_FUNC mode, Eigen::MatrixXd &A,
-      Eigen::VectorXd &b, Eigen::VectorXd &c, std::vector<long> &basis) {
+  void Simplex::runPhaseI(OBJ_FUNC mode, const Eigen::MatrixXd &A,
+      const Eigen::VectorXd &b, const Eigen::VectorXd &c, std::vector<long> &basis) {
+    Eigen::MatrixXd A_copy(A);
+    long original_num_rows = A.rows();
+    basis.clear();
+    Eigen::VectorXd new_c = Eigen::VectorXd::Zero(A.cols() + original_num_rows);
+    for(auto i = 0; i < original_num_rows; ++i) {
+      A_copy.conservativeResize(A_copy.rows(), A_copy.cols()+1);
+      Eigen::VectorXd temp =  Eigen::VectorXd::Unit(A_copy.rows(), i);
+      temp[i] = sgn(b[i]);
+      if(temp[i] == 0) {
+        temp[i] = 1;
+      }
+      A_copy.col(A_copy.cols() -1) = temp;
+      new_c[A_copy.cols() - 1] = 1;
+      basis.push_back(A_copy.cols()-1);
+    }
+    runPrimal(OBJ_FUNC::MINIMIZE, A_copy, b, new_c, basis);
   }
 
 
@@ -51,12 +64,9 @@ namespace cppsolver {
       Eigen::PermutationMatrix<Eigen::Dynamic, Eigen::Dynamic> perm;
       perm.indices() = indices;
       Abeta = A(Eigen::all, basis);
-      Eigen::MatrixXd Abeta_inverse_test = Abeta.inverse();
-      std::cout << Abeta_inverse << std::endl;
-      std::cout << "*******************" << std::endl;
-      std::cout << Abeta_inverse_test << std::endl;
+      Eigen::MatrixXd Abeta_inverse = Abeta.inverse();
       Eigen::VectorXd c_beta = c(basis, Eigen::all);
-      Eigen::VectorXd pi_beta = c_beta.transpose() * Abeta_inverse_test;
+      Eigen::VectorXd pi_beta = c_beta.transpose() * Abeta_inverse;
       Eigen::MatrixXd A_eta = A(Eigen::all, non_basis);
       Eigen::VectorXd c_eta = c(non_basis, Eigen::all);
       Eigen::MatrixXd A_perm = A * perm;
@@ -107,17 +117,15 @@ namespace cppsolver {
       }
       Eigen::VectorXd d_eta = d.bottomRows(non_basis.size());
       entering_index = non_basis.at(entering_index);
-      Eigen::VectorXd y = A.row(entering_index);
-      updateInverse(v, leaving_index, Abeta_inverse);
+      //Eigen::VectorXd y = A.row(entering_index);
+      //updateInverse(v, leaving_index, Abeta_inverse);
       leaving_index = basis.at(leaving_index);
       // update leaving index to original A index
       auto p1 = findInVector<long>(basis, leaving_index);
       auto p2 = findInVector<long>(non_basis, entering_index);
       basis[p1.second] = entering_index;
       non_basis[p2.second] = leaving_index;
-      std::cout << "basis: ";
       printVector(basis);
-      std::cout << "nonbasis: ";
       printVector(non_basis);
       ++iteration;
     }
@@ -141,7 +149,7 @@ namespace cppsolver {
       Eigen::VectorXd rc = c_eta - (A_eta.transpose() * ybar);
       // find entering value
       auto [entering_index, worst_rc] = findEnteringValue(mode, rc);
-      if (worst_rc > 0) {
+      if (worst_rc >= 0) {
         std::cout << "Num iterations: " << iteration << std::endl;
         Eigen::VectorXd x = Eigen::VectorXd::Zero(c.size());
         for(long i = 0; i < basis.size(); ++i) {
@@ -311,5 +319,9 @@ namespace cppsolver {
       std::cout << i << ", ";
     }
     std::cout << std::endl;
+  }
+
+  template <typename T> int Simplex::sgn(T val) {
+    return (T(0) < val) - (val < T(0));
   }
 }

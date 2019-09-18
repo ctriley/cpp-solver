@@ -21,8 +21,8 @@ namespace cppsolver {
             const Eigen::VectorXd &c, std::vector<long> &basis);
     void runDual(OBJ_FUNC mode, const Eigen::MatrixXd &A, const Eigen::VectorXd &b,
             const Eigen::VectorXd &c, std::vector<long> &basis);
-    void runPhaseI(OBJ_FUNC mode, Eigen::MatrixXd &A, Eigen::VectorXd &b,
-            Eigen::VectorXd &c, std::vector<long> &basis);
+    void runPhaseI(OBJ_FUNC mode, const Eigen::MatrixXd &A, const Eigen::VectorXd &b,
+            const Eigen::VectorXd &c, std::vector<long> &basis);
     SIMPLEX_MODE chooseSimplexMode(const Eigen::MatrixXd &A,
         const Eigen::VectorXd &b, const Eigen::VectorXd &c, std::vector<long> &basis);
     static void updateInverse(const Eigen::VectorXd &alpha, long leaving_index,
@@ -38,7 +38,7 @@ namespace cppsolver {
         const T  & element);
     template <typename T>
     void printVector(const std::vector<T> &vec);
-
+    template <typename T> int sgn(T val);
   public:
     double getObjective() const;
     const std::vector<double>& getValues() const;
